@@ -1,0 +1,35 @@
+version: '3'
+
+services:
+  uav-cam:
+    container_name: uav-cam
+    image: "jenssgb/rtspffmpeg:base"
+    environment:
+      - RTSP_PROTOCOLS=tcp
+    depends_on:
+      - rtsp-server
+    volumes:
+      - ./media/:/media
+    network_mode: "host"
+    command: "ffmpeg -re -stream_loop -1 -i /media/video1.mp4 -vf 'fps=3'  -b:v 100M  -maxrate 1000M -bufsize 50M -f rtsp rtsp://localhost:8554/compose-rtsp"
+    # command: "${FFMPEG_CMD}"
+
+  rtsp-server:
+    container_name: rtsp-server-base
+    restart: always
+    image: "aler9/rtsp-simple-server"
+    environment:
+      - RTSP_PROTOCOLS=tcp
+    network_mode: "host"
+  
+  nrt:
+    container_name: nrt
+    build: .
+    image: nrt
+    env_file: ./app/config.env
+    #restart: on-failure
+    volumes:
+     - ./app:/app  
+     - ./data:/data  
+     - ./graphics:/graphics  
+    network_mode: "host"
